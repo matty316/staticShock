@@ -7,10 +7,15 @@
 
 import Foundation
 import ArgumentParser
+import MarkyMark
 
 @main
 struct StaticShock: ParsableCommand {
+    @Argument var folder: String
+    
     func run() throws {
-        
+        let fm = FileManager.default
+        let paths = try fm.contentsOfDirectory(atPath: folder)
+        try Generator(folder: folder).create(paths: paths)
     }
 }

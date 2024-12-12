@@ -1,15 +1,6 @@
 {
-  "originHash" : "00f8528591b62618ff08af4becd27aa3fd9336b47f17507401892bd2d267f8fe",
+  "originHash" : "b4fe2b6f0407991a02952ddcbf2cb58076279a9e453b146b5fe1f5be6b614621",
   "pins" : [
-    {
-      "identity" : "ink",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/johnsundell/ink.git",
-      "state" : {
-        "revision" : "bcc9f219900a62c4210e6db726035d7f03ae757b",
-        "version" : "0.6.0"
-      }
-    },
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",

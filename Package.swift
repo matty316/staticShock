@@ -7,7 +7,7 @@ let package = Package(
     name: "StaticShock",
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
-        .package(url: "https://github.com/johnsundell/ink.git", from: "0.1.0")
+        .package(name: "MarkyMark", path: "../markymark"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -16,8 +16,8 @@ let package = Package(
             name: "StaticShock", dependencies: [
                 // other dependencies
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Ink", package: "ink"),
+                .product(name: "MarkyMark", package: "MarkyMark")
             ]),
-        .testTarget(name: "StaticShockTests", dependencies: ["StaticShock"])
+        .testTarget(name: "StaticShockTests", dependencies: ["StaticShock"]),
     ]
 )
