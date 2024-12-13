@@ -19,6 +19,7 @@ struct GeneratorTests {
         let sitePaths = try fm.contentsOfDirectory(atPath: siteDir)
         #expect(sitePaths.contains(where: { $0 == "about.html" }))
         #expect(sitePaths.contains(where: { $0 == "index.html" }))
+        #expect(sitePaths.contains(where: { $0 == "test.html" }))
         #expect(sitePaths.contains(where: { $0 == "css" }))
         #expect(sitePaths.contains(where: { $0 == "js" }))
         let cssPaths = try fm.contentsOfDirectory(atPath: "\(siteDir)/css")
