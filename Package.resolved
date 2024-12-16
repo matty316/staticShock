@@ -1,13 +1,13 @@
 {
-  "originHash" : "4efa8d8b5d2c1be5e12e3264dee815f4b0f5e7ca5641447bf8c28a7cca67536c",
+  "originHash" : "6c1d667f41893c3cd8614fb8071cfa1e16472b49051450b0756b44557e2d0e2e",
   "pins" : [
     {
       "identity" : "markymark",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/matty316/markymark.git",
       "state" : {
-        "revision" : "43f8c7b254870c497e68fedc02e8db2ca16a8d6d",
-        "version" : "0.0.1"
+        "revision" : "3c0dea9574267cab44c71916998cba230ba959e0",
+        "version" : "0.0.2"
       }
     },
     {

@@ -164,7 +164,7 @@ struct Generator {
         let fm = FileManager.default
         let input = try String(contentsOfFile: "\(folder)/\(path)", encoding: .utf8)
         let markup = try MarkMark.parse(input)
-        let body = markup.html()
+        let body = try markup.html()
         let header = try getHeader(frontMatter: markup.frontMatter)
         let footer = try getFooter(frontMatter: markup.frontMatter)
         
