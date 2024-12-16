@@ -9,7 +9,7 @@ import Foundation
 import MarkyMark
 
 enum GeneratorError: Error {
-    case missingVar
+    case missingVar(String)
     case unterminated
 }
 
@@ -19,6 +19,7 @@ struct Generator {
     let postsDir: String
     var styleSheets = [String]()
     var scripts = [String]()
+    var posts = [String]()
     
     init(folder: String, siteDir: String? = nil, postsDir: String? = nil) {
         self.folder = folder
@@ -29,7 +30,9 @@ struct Generator {
     mutating func create() throws {
         let fm = FileManager.default
         let paths = try fm.contentsOfDirectory(atPath: folder)
-        try fm.removeItem(atPath: siteDir)
+        if fm.fileExists(atPath: siteDir) {
+            try fm.removeItem(atPath: siteDir)
+        }
         try fm.createDirectory(atPath: siteDir, withIntermediateDirectories: true)
         try collectStaticFiles()
         for path in paths {
@@ -38,11 +41,19 @@ struct Generator {
             } else if isStaticFile(path) {
                 try copyFile(path: path)
             } else if isHTML(path) {
-                if !isHeader(path) && !isFooter(path) {
+                if !isHeader(path) && !isFooter(path) && !isPostTemplate(path) {
                     try copyHTML(path: path)
                 }
             } else {
-                try createFolder(path: path)
+                var isDir: ObjCBool = false
+                fm.fileExists(atPath: "\(folder)/\(path)", isDirectory: &isDir)
+                if isDir.boolValue {
+                    if isPostsDir(path) {
+                        try createBlog()
+                    } else {
+                        try createFolder(path: path)
+                    }
+                }
             }
         }
     }
@@ -68,7 +79,7 @@ struct Generator {
                     .replacingCharacters(in: range.lowerBound..<rParen.upperBound,
                                          with: emitScripts(scripts: scripts))
             } else {
-                throw .missingVar
+                throw .missingVar(string)
             }
         }
         return newString
@@ -95,11 +106,19 @@ struct Generator {
     }
     
     func isHeader(_ path: String) -> Bool {
-        path.hasSuffix("header.html")
+        path == "header.html"
     }
     
     func isFooter(_ path: String) -> Bool {
-        path.hasSuffix("footer.html")
+        path == "footer.html"
+    }
+    
+    func isPostsDir(_ path: String) -> Bool {
+        path == postsDir
+    }
+    
+    func isPostTemplate(_ path: String) -> Bool {
+        path == "post.html"
     }
     
     func getHeader(frontMatter: [String: String]) throws -> String {
@@ -116,12 +135,12 @@ struct Generator {
     
     mutating func collectStaticFiles() throws {
         let fm = FileManager.default
-        let css = try fm.contentsOfDirectory(atPath: "\(folder)/css/")
+        styleSheets = try fm.contentsOfDirectory(atPath: "\(folder)/css/")
             .filter { isCSS($0) }
-        let js = try fm.contentsOfDirectory(atPath: "\(folder)/js/")
+        scripts = try fm.contentsOfDirectory(atPath: "\(folder)/js/")
             .filter { isJS($0) }
-        styleSheets.append(contentsOf: css)
-        scripts.append(contentsOf: js)
+        posts = try fm.contentsOfDirectory(atPath: "\(folder)/posts")
+            .filter { isMarkdown($0) }
     }
     
     mutating func createFolder(path: String) throws {
@@ -188,5 +207,55 @@ struct Generator {
         let string = try String(contentsOfFile: "\(folder)/\(path)", encoding: .utf8)
         let newString = try template(input: string, frontMatter: [:], styleSheets: styleSheets, scripts: scripts)
         try newString.write(toFile: "\(siteDir)/\(path)", atomically: true, encoding: .utf8)
+    }
+    
+    mutating func createBlog() throws {
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        if fm.fileExists(atPath: "\(folder)/posts", isDirectory: &isDir) && isDir.boolValue {
+            let postTemplate = try String(contentsOfFile: "\(folder)/post.html", encoding: .utf8)
+            try createPosts()
+            let postString = try posts
+                .map {
+                    let post = try String(contentsOfFile: "\(folder)/posts/\($0)", encoding: .utf8)
+                    //TODO: allow just getting front matter without parsing whole file
+                    let frontMatter = try MarkMark.parse(post).frontMatter
+                    let template = try template(input: postTemplate, frontMatter: frontMatter, styleSheets: [], scripts: [])
+                    return template
+                }
+                .joined(separator: "\n")
+            let body = """
+\(postString)
+"""
+            let header = try getHeader(frontMatter: ["title": "blog"])
+            let footer = try getFooter(frontMatter: [:])
+            let contents = """
+\(header)
+\(body)
+\(footer)
+"""
+            fm.createFile(atPath: "\(siteDir)/blog.html", contents: contents.data(using: .utf8))
+        }
+    }
+    
+    func createPosts() throws {
+        for post in posts {
+            let fm = FileManager.default
+            let input = try String(contentsOfFile: "\(folder)/posts/\(post)", encoding: .utf8)
+            let markup = try MarkMark.parse(input)
+            let body = try markup.html()
+            let header = try getHeader(frontMatter: markup.frontMatter)
+            let footer = try getFooter(frontMatter: markup.frontMatter)
+            
+            let html = """
+\(header)
+\(body)
+\(footer)
+"""
+            
+            let data = html.data(using: .utf8)
+            let htmlPath = post.replacingOccurrences(of: ".md", with: ".html")
+            fm.createFile(atPath: "\(siteDir)/\(htmlPath)", contents: data)
+        }
     }
 }
