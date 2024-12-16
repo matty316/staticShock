@@ -10,6 +10,7 @@ import MarkyMark
 
 enum GeneratorError: Error {
     case missingVar
+    case unterminated
 }
 
 struct Generator {
@@ -35,8 +36,10 @@ struct Generator {
             if isMarkdown(path) {
                 try createHTMLFile(path: path)
             } else if isStaticFile(path) {
+                try copyFile(path: path)
+            } else if isHTML(path) {
                 if !isHeader(path) && !isFooter(path) {
-                    try copyFile(path: path)
+                    try copyHTML(path: path)
                 }
             } else {
                 try createFolder(path: path)
@@ -51,7 +54,7 @@ struct Generator {
         var newString = input
         while let range = newString.range(of: "#(") {
             guard let rParen = newString[range.upperBound...].range(of: ")") else {
-                continue
+                throw .unterminated
             }
             let string = String(newString[range.upperBound..<rParen.lowerBound])
             if let val = frontMatter[string] {
@@ -72,7 +75,7 @@ struct Generator {
     }
     
     func isStaticFile(_ path: String) -> Bool {
-        return isHTML(path) || isJS(path) || isCSS(path)
+        return isJS(path) || isCSS(path)
     }
     
     func isMarkdown(_ path: String) -> Bool {
@@ -179,5 +182,11 @@ struct Generator {
     func copyFile(path: String) throws {
         let fm = FileManager.default
         try fm.copyItem(atPath: "\(folder)/\(path)", toPath: "\(siteDir)/\(path)")
+    }
+    
+    func copyHTML(path: String) throws {
+        let string = try String(contentsOfFile: "\(folder)/\(path)", encoding: .utf8)
+        let newString = try template(input: string, frontMatter: [:], styleSheets: styleSheets, scripts: scripts)
+        try newString.write(toFile: "\(siteDir)/\(path)", atomically: true, encoding: .utf8)
     }
 }
