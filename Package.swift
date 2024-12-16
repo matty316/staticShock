@@ -18,6 +18,6 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "MarkyMark", package: "MarkyMark")
             ]),
-        .testTarget(name: "StaticShockTests", dependencies: ["StaticShock"]),
+        .testTarget(name: "StaticShockTests", dependencies: ["StaticShock"], resources: [.copy("TestData")]),
     ]
 )

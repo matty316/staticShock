@@ -11,10 +11,11 @@ import Testing
 
 struct GeneratorTests {
     @Test func testGenerateSite() throws {
-        let path = "/Users/matty/projects/staticShock/website"
-        var g = Generator(folder: path)
-        try g.create()
         let fm = FileManager.default
+        let path = Bundle.module.resourcePath!
+        print(path)
+        var g = Generator(folder: "\(path)/TestData/website")
+        try g.create()
         let siteDir = g.siteDir
         let sitePaths = try fm.contentsOfDirectory(atPath: siteDir)
         #expect(sitePaths.contains(where: { $0 == "about.html" }))
