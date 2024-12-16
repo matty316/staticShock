@@ -12,9 +12,11 @@ import MarkyMark
 @main
 struct StaticShock: ParsableCommand {
     @Argument var folder: String
+    @Option var sitedir: String?
+    @Option var postsdir: String?
     
     func run() throws {
-        var g = Generator(folder: folder)
+        var g = Generator(folder: folder, siteDir: sitedir)
         try g.create()
     }
 }

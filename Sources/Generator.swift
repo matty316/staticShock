@@ -8,11 +8,22 @@
 import Foundation
 import MarkyMark
 
+enum GeneratorError: Error {
+    case missingVar
+}
+
 struct Generator {
-    let siteDir = "site"
+    let siteDir: String
     let folder: String
+    let postsDir: String
     var styleSheets = [String]()
     var scripts = [String]()
+    
+    init(folder: String, siteDir: String? = nil, postsDir: String? = nil) {
+        self.folder = folder
+        self.siteDir = siteDir ?? "site"
+        self.postsDir = postsDir ?? "posts"
+    }
     
     mutating func create() throws {
         let fm = FileManager.default
@@ -24,11 +35,40 @@ struct Generator {
             if isMarkdown(path) {
                 try createHTMLFile(path: path)
             } else if isStaticFile(path) {
-                try copyFile(path: path)
+                if !isHeader(path) && !isFooter(path) {
+                    try copyFile(path: path)
+                }
             } else {
                 try createFolder(path: path)
             }
         }
+    }
+    
+    func template(input: String,
+                  frontMatter: [String: String],
+                  styleSheets: [String],
+                  scripts: [String]) throws(GeneratorError) -> String {
+        var newString = input
+        while let range = newString.range(of: "#(") {
+            guard let rParen = newString[range.upperBound...].range(of: ")") else {
+                continue
+            }
+            let string = String(newString[range.upperBound..<rParen.lowerBound])
+            if let val = frontMatter[string] {
+                newString = newString.replacingCharacters(in: range.lowerBound..<rParen.upperBound, with: val)
+            } else if string == "styles" {
+                newString = newString
+                    .replacingCharacters(in: range.lowerBound..<rParen.upperBound,
+                                         with: emitStyleSheets(styleSheets: styleSheets))
+            } else if string == "scripts" {
+                newString = newString
+                    .replacingCharacters(in: range.lowerBound..<rParen.upperBound,
+                                         with: emitScripts(scripts: scripts))
+            } else {
+                throw .missingVar
+            }
+        }
+        return newString
     }
     
     func isStaticFile(_ path: String) -> Bool {
@@ -49,6 +89,26 @@ struct Generator {
     
     func isHTML(_ path: String) -> Bool {
         path.hasSuffix(".html")
+    }
+    
+    func isHeader(_ path: String) -> Bool {
+        path.hasSuffix("header.html")
+    }
+    
+    func isFooter(_ path: String) -> Bool {
+        path.hasSuffix("footer.html")
+    }
+    
+    func getHeader(frontMatter: [String: String]) throws -> String {
+        let string = try String(contentsOfFile: folder + "/header.html", encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return try template(input: string, frontMatter: frontMatter, styleSheets: styleSheets, scripts: scripts)
+    }
+    
+    func getFooter(frontMatter: [String: String]) throws -> String {
+        let string = try String(contentsOfFile: folder + "/footer.html", encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return try template(input: string, frontMatter: frontMatter, styleSheets: styleSheets, scripts: scripts)
     }
     
     mutating func collectStaticFiles() throws {
@@ -79,47 +139,31 @@ struct Generator {
         }
     }
     
-    func emitStyleSheets() -> String {
+    func emitStyleSheets(styleSheets: [String]) -> String {
         var string = ""
         for ss in styleSheets {
             string.append("<link rel=\"stylesheet\" href=\"css/\(ss)\">")
         }
         return string
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    func emitScripts() -> String {
+    func emitScripts(scripts: [String]) -> String {
         var string = ""
         for s in scripts {
             string.append("<script src=\"js/\(s)\"></script>")
         }
         return string
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     func createHTMLFile(path: String) throws {
         let fm = FileManager.default
         let input = try String(contentsOfFile: "\(folder)/\(path)", encoding: .utf8)
         let markup = try MarkMark.parse(input)
-        let body = markup.elements
-            .map { "\t\t\($0.html())" }
-            .joined(separator: "\n")
-        
-        let header = """
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <title>\(markup.frontMatter["title"] ?? "title")</title>
-        \(emitStyleSheets())
-    </head>
-    <body>
-"""
-        let footer = """
-        \(emitScripts())
-    </body>
-</html>
-"""
+        let body = markup.html()
+        let header = try getHeader(frontMatter: markup.frontMatter)
+        let footer = try getFooter(frontMatter: markup.frontMatter)
         
         let html = """
 \(header)
