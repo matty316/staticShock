@@ -205,7 +205,18 @@ struct Generator {
     
     func copyHTML(path: String) throws {
         let string = try String(contentsOfFile: "\(folder)/\(path)", encoding: .utf8)
-        let newString = try template(input: string, frontMatter: [:], styleSheets: styleSheets, scripts: scripts)
+        let title = path
+            .replacingOccurrences(of: ".html", with: "")
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
+        let header = try getHeader(frontMatter: ["title": title])
+        let footer = try getFooter(frontMatter: [:])
+        var newString = """
+\(header)
+\(string)
+\(footer)
+"""
+        newString = try template(input: newString, frontMatter: [:], styleSheets: styleSheets, scripts: scripts)
         try newString.write(toFile: "\(siteDir)/\(path)", atomically: true, encoding: .utf8)
     }
     
