@@ -33,7 +33,11 @@ a static site generator written in swift
 ### build from source
 
 `$ git clone https://github.com/matty316/staticShock.git`
+
 `$ cd staticShock`
+
 `$ swift build -c release`
+
 `$ cd .build/release`
+
 `$ sudo cp -f StaticShock /usr/local/bin/staticshock`
