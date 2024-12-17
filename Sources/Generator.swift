@@ -10,7 +10,7 @@ import MarkyMark
 
 enum GeneratorError: Error {
     case missingVar(String)
-    case unterminated
+    case unterminatedVar
 }
 
 struct Generator {
@@ -65,7 +65,7 @@ struct Generator {
         var newString = input
         while let range = newString.range(of: "#(") {
             guard let rParen = newString[range.upperBound...].range(of: ")") else {
-                throw .unterminated
+                throw .unterminatedVar
             }
             let string = String(newString[range.upperBound..<rParen.lowerBound])
             if let val = frontMatter[string] {
