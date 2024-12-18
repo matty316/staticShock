@@ -36,24 +36,22 @@ struct Generator {
         try fm.createDirectory(atPath: siteDir, withIntermediateDirectories: true)
         try collectStaticFiles()
         for path in paths {
-            if isMarkdown(path) {
+            var isDir: ObjCBool = false
+            fm.fileExists(atPath: "\(folder)/\(path)", isDirectory: &isDir)
+            if isDir.boolValue {
+                if isPostsDir(path) {
+                    try createBlog()
+                } else {
+                    try createFolder(path: path)
+                }
+            } else if isMarkdown(path) {
                 try createHTMLFile(path: path)
-            } else if isStaticFile(path) {
-                try copyFile(path: path)
             } else if isHTML(path) {
                 if !isHeader(path) && !isFooter(path) && !isPostTemplate(path) {
                     try copyHTML(path: path)
                 }
             } else {
-                var isDir: ObjCBool = false
-                fm.fileExists(atPath: "\(folder)/\(path)", isDirectory: &isDir)
-                if isDir.boolValue {
-                    if isPostsDir(path) {
-                        try createBlog()
-                    } else {
-                        try createFolder(path: path)
-                    }
-                }
+                try copyFile(path: path)
             }
         }
     }
@@ -146,19 +144,7 @@ struct Generator {
     mutating func createFolder(path: String) throws {
         let fm = FileManager.default
         let dirPath = "\(siteDir)/\(path)"
-        try fm.createDirectory(atPath: dirPath, withIntermediateDirectories: true)
-        let folderPath = "\(folder)/\(path)"
-        let paths = try fm.contentsOfDirectory(atPath: folderPath)
-        for p in paths {
-            let fullPath = "\(path)/\(p)"
-            if isMarkdown(fullPath) {
-                try createHTMLFile(path: fullPath)
-            } else if isStaticFile(fullPath) {
-                try copyFile(path: fullPath)
-            } else {
-                try createFolder(path: fullPath)
-            }
-        }
+        try fm.copyItem(atPath: "\(folder)/\(path)", toPath: dirPath)
     }
     
     func emitStyleSheets(styleSheets: [String]) -> String {

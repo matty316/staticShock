@@ -28,11 +28,14 @@ struct GeneratorTests {
         #expect(!sitePaths.contains(where: { $0 == "post.html" }))
         #expect(sitePaths.contains(where: { $0 == "css" }))
         #expect(sitePaths.contains(where: { $0 == "js" }))
+        #expect(sitePaths.contains(where: { $0 == "img" }))
         #expect(sitePaths.contains(where: { $0 == "test-post.html" }))
         let cssPaths = try fm.contentsOfDirectory(atPath: "\(siteDir)/css")
         let jsPaths = try fm.contentsOfDirectory(atPath: "\(siteDir)/js")
         #expect(cssPaths.contains(where: { $0 == "styles.css" }))
         #expect(jsPaths.contains(where: { $0 == "script.js" }))
+        let imgPaths = try fm.contentsOfDirectory(atPath: "\(siteDir)/img")
+        #expect(imgPaths.contains(where: { $0 == "profile.jpeg" }))
     }
     
     @Test func testTemplating() throws {
