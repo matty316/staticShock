@@ -9,7 +9,7 @@ import Foundation
 import MarkyMark
 
 enum GeneratorError: Error {
-    case missingVar(String)
+    case missingVar(String, String)
     case unterminatedVar
 }
 
@@ -61,6 +61,7 @@ struct Generator {
                   styleSheets: [String],
                   scripts: [String]) throws(GeneratorError) -> String {
         var newString = input
+        
         while let range = newString.range(of: "#(") {
             guard let rParen = newString[range.upperBound...].range(of: ")") else {
                 throw .unterminatedVar
@@ -77,7 +78,8 @@ struct Generator {
                     .replacingCharacters(in: range.lowerBound..<rParen.upperBound,
                                          with: emitScripts(scripts: scripts))
             } else {
-                throw .missingVar(string)
+                newString = newString
+                    .replacingCharacters(in: range.lowerBound..<rParen.upperBound, with: "")
             }
         }
         return newString
