@@ -20,11 +20,13 @@ struct Generator {
     var styleSheets = [String]()
     var scripts = [String]()
     var posts = [String]()
+    var blogClass: String
     
-    init(folder: String, siteDir: String? = nil, postsDir: String? = nil) {
+    init(folder: String, siteDir: String? = nil, postsDir: String? = nil, blogClass: String? = nil) {
         self.folder = folder
         self.siteDir = siteDir ?? "site"
         self.postsDir = postsDir ?? "posts"
+        self.blogClass = blogClass ?? "blog"
     }
     
     mutating func create() throws {
@@ -219,9 +221,17 @@ struct Generator {
                     let post = try String(contentsOfFile: "\(folder)/posts/\($0)", encoding: .utf8)
                     //TODO: allow just getting front matter without parsing whole file
                     let frontMatter = try MarkMark.parse(post).frontMatter
+                    guard let dateString = frontMatter["date"] else {
+                        throw GeneratorError.missingVar("post", "date")
+                    }
+                    let df = DateFormatter()
+                    df.dateFormat = "mm-dd-yyyy"
+                    let date = df.date(from: dateString)!
                     let template = try template(input: postTemplate, frontMatter: frontMatter, styleSheets: [], scripts: [])
-                    return template
+                    return (template, date)
                 }
+                .sorted(by: { $0.1 > $1.1 })
+                .map { $0.0 }
                 .joined(separator: "\n")
             let body = """
 \(postString)
@@ -230,7 +240,9 @@ struct Generator {
             let footer = try getFooter(frontMatter: [:])
             let contents = """
 \(header)
+<div class="\(blogClass)">
 \(body)
+</div>
 \(footer)
 """
             fm.createFile(atPath: "\(siteDir)/blog.html", contents: contents.data(using: .utf8))

@@ -14,9 +14,10 @@ struct StaticShock: ParsableCommand {
     @Argument var folder: String
     @Option var sitedir: String?
     @Option var postsdir: String?
+    @Option var blogClass: String?
     
     func run() throws {
-        var g = Generator(folder: folder, siteDir: sitedir)
+        var g = Generator(folder: folder, siteDir: sitedir, blogClass: blogClass)
         try g.create()
     }
 }

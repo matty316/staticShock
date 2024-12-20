@@ -79,7 +79,7 @@ struct GeneratorTests {
     
     @Test func testBlog() throws {
         let path = Bundle.module.resourcePath!
-        var g = Generator(folder: "\(path)/TestData/website", siteDir: "blogTest")
+        var g = Generator(folder: "\(path)/TestData/website", siteDir: "blogTest", blogClass: "blog columns")
         try g.create()
         let siteDir = g.siteDir
         let contents = try String(contentsOfFile: "\(siteDir)/blog.html", encoding: .utf8)
@@ -101,10 +101,20 @@ struct GeneratorTests {
             <a href="blog.html" class="navbar-item">blog</a>
         </nav>
         <div class="content">
-<div class="card">
+<div class="blog columns">
+<div class="card column">
+    <div class="card-content content"><a href="test-post-2.html"><h1>test post</h1></a><p>this is a short description</p></div>
+</div>
+
+<div class="card column">
+    <div class="card-content content"><a href="test-post-3.html"><h1>test post</h1></a><p>this is a short description</p></div>
+</div>
+
+<div class="card column">
     <div class="card-content content"><a href="test-post.html"><h1>test post</h1></a><p>this is a short description</p></div>
 </div>
 
+</div>
 </div>
 </div>
 <script src="js/script.js"></script>

@@ -1,8 +1,8 @@
 ---
 title: test post
 desc: this is a short description
-slug: test-post
-date: 01-03-2024
+slug: test-post-3
+date: 01-08-2024
 ---
 
 # Test Post
